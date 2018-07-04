@@ -190,21 +190,35 @@ async function Calculate(){
     let ansEl = "<ul>"
     let totalEl = mol.totalElectrons; 
     var occ ; // occupency 
+    occ = occupy(mol);
     for (var ith=0;ith<mol.Eig.length;ith++){
-        totalEl-=2;
-        if (totalEl>=0){
-            occ = "&uarr;&darr;&nbsp;";
+        let  homolumo = "";
+        let el = "";
+        // Filled
+        if (occ[ith]==2){
+            el = "&uarr;&darr;&nbsp;";
+        } 
+        // singly filled
+        else if (occ[ith]==1){
+            el = "&uarr;&nbsp;&nbsp;";
         }
-        else if (totalEl==-1){
-            occ = "&uarr;&nbsp;&nbsp;";
+        // HOMO  
+        if (occ[ith]==2 && occ[ith+1]==0 ){
+            homolumo = "&nbsp;&nbsp;HOMO";
         }
-        else {
-            occ = "&nbsp;&nbsp;&nbsp;";
+        // LUMO
+        else if (occ[ith]==0 && occ[ith-1]==2 ){
+            homolumo = "&nbsp;&nbsp;LUMO";
+        }
+        // SOMO
+        else if (occ[ith]==1){
+            homolumo = "&nbsp;&nbsp;SOMO";
         }
 
-        ansEl +="<li><a href=\"#\"> "+ occ +"&nbsp;<b style=\"color:red\" onclick = 'sampleDensity(mol,"+ 
+
+        ansEl +="<li><a href=\"#\"> "+ el +"&nbsp;<b style=\"color:red\" onclick = 'sampleDensity(mol,"+ 
                 ith.toString()+ ")'>Show &Psi;</b>&nbsp;&nbsp;&nbsp;&nbsp;" +  mol.Eig[ith].toString() 
-                + " </a> </li>";
+                +  homolumo+ " </a> </li>";
     }
     ansEl +=  "</ul>"
 
@@ -322,14 +336,16 @@ function sortEigPsi(Ei,Psi){
 function showDensity(x,y,z,P){
     if (Math.abs(P)>0.1){
         if (P < 0.0 ){
-            col = 0x4cd137;
+            //col = 0x4cd137;
+            col = 0x00CDFF;
         }
         else {
-            col = 0xe74c3c;
+            //col = 0xe74c3c;
+            col = 0xCF000F;
         }
 
         var material = new THREE.MeshLambertMaterial( { color: col, side: THREE.DoubleSide,transparent: true, opacity: Math.abs(P)} );
-        density.push( new THREE.Mesh(new THREE.SphereGeometry(0.07, 5, 5), material ));
+        density.push( new THREE.Mesh(new THREE.SphereGeometry(0.12, 5, 5), material ));
         density[density.length-1].overdraw = true;
         density[density.length-1].position.set( x , y, z  );
         scene.add(density[density.length-1]);
@@ -343,3 +359,4 @@ function removeDensity(){
     }
     density = [];
 }
+

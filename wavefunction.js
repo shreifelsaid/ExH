@@ -82,8 +82,15 @@ function box(Mol){
     let Xm = Xt/ allAtoms.length;
     let Ym = Yt/ allAtoms.length;
     let Zm = Zt/ allAtoms.length;
-    let f = 3.0;
-    return [[Xm,Ym,Zm],[Xmax*f +f,Ymax*f + f,Zmax*f + f],[Xmin*f - f,Ymin*f - f,Zmin*f - f]];
+    let f = 1.2;
+
+    //find biggest atom
+    let e = Mol.atoms[0].radius; 
+    for (var i =1;i<Mol.atoms.length;i++){
+        e = Math.max(e,  Mol.atoms[i].radius);
+    }
+    e *= 5;
+    return [[Xm,Ym,Zm],[Xmax*f +e,Ymax*f + e,Zmax*f + e],[Xmin*f - e,Ymin*f - e,Zmin*f - e]];
 }
 
 // sample density of Nth MO of Molecule
@@ -95,18 +102,19 @@ async function sampleDensity(Mol,Nth,points =1000){
     let Box = box(Mol);
     let scale = 1.0
     // find scale by doing a sample of 100 points
+    // box dimension
+    let lx = Box[1][0]- Box[2][0];
+    let ly = Box[1][1]- Box[2][1];
+    let lz = Box[1][2]- Box[2][2];
     let maxP = 0.0;
-    for (var i=0; i<100; i++){
-        // Center Coordinate
-        let Xm = Box[0][0];
-        let Ym = Box[0][1];
-        let Zm = Box[0][2];
-        MOs = Mol.MOs;
-        AOs = Mol.AOs;
-        // box dimension
-        let lx = Box[1][0]- Box[2][0];
-        let ly = Box[1][1]- Box[2][1];
-        let lz = Box[1][2]- Box[2][2];
+    // Center Coordinate
+    let Xm = Box[0][0];
+    let Ym = Box[0][1];
+    let Zm = Box[0][2];
+    
+    let MOs = Mol.MOs;
+    let AOs = Mol.AOs;
+    for (var i=0; i<110; i++){
         // get a random point
         let xp = (Math.random()-0.5)*lx + Xm;
         let yp = (Math.random()-0.5)*ly + Ym;
@@ -123,24 +131,19 @@ async function sampleDensity(Mol,Nth,points =1000){
         }
         maxP = Math.max(Math.abs(P),maxP);
     }
-    scale = 1.0/maxP
+    scale = 1.1/maxP
+    let boxSize = lx * ly * lz ;
+    //console.log(boxSize);
+    points = Math.min(5000,parseInt(boxSize * points/5000.0))
+    points = Math.max(points,400);
     // DO the real one
     i = 0;
+    let trials = 0
     while (i<points){
-        // Center Coordinate
-        let Xm = Box[0][0];
-        let Ym = Box[0][1];
-        let Zm = Box[0][2];
-        MOs = Mol.MOs;
-        AOs = Mol.AOs;
-        // box dimension
-        let lx = Box[1][0]- Box[2][0];
-        let ly = Box[1][1]- Box[2][1];
-        let lz = Box[1][2]- Box[2][2];
         // get a random point
-        let xp = (Math.random()-0.5)*lx + Xm;
-        let yp = (Math.random()-0.5)*ly + Ym;
-        let zp = (Math.random()-0.5)*lz + Zm;
+        let xp = (Math.random()-0.5)*lx*2.0 + Xm;
+        let yp = (Math.random()-0.5)*ly*2.0 + Ym;
+        let zp = (Math.random()-0.5)*lz*2.0 + Zm;
         let p = [];
         
         for (var k =0;k<AOs.length;k++){
@@ -156,9 +159,13 @@ async function sampleDensity(Mol,Nth,points =1000){
         if (P*scale>0.1){
             prgwidth += 100/points;
             elem.style.width = prgwidth + '%'
-            await sleep(15);
+            await sleep(10);
             i += 1;    
         }
+        if (trials%200 == 0){
+            await sleep(20);
+        }
+        trials++
     }
     elem.style.backgroundColor = "#3498db";
 }
