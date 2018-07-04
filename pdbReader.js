@@ -14,7 +14,6 @@ function pdbFileReader(fileLines){
         }
         
     }
-    console.log(xyzText);
 
     return xyzText;
 
